@@ -74,6 +74,9 @@ class joinquant_trader:
         try:
             self.trader.connect()
             return True
+        except KeyError as e:
+            logging.error(f"配置缺失错误: {e}，请检查策略配置.json中是否包含该字段")
+            return False
         except Exception as e:
             logging.error(f"运行错误:{e}")
             logging.error('{}连接失败'.format(self.trader_tool))
@@ -528,16 +531,17 @@ if __name__=='__main__':
         qmt_account=qmt_account,
         qmt_account_type=qmt_account_type,
         data_api=data_api)
-    trader.connact()
-    if True:
+    if trader.connact():
         #3秒运行一次
         schedule.every(0.05).minutes.do(trader.trader_log)
         for date in date_list:
             schedule.every().day.at('{}'.format(date)).do(trader.trade)
-            print('策略调仓时间定时在{} 等待交易***********************************'.format(date))
+            logging.info('策略调仓时间定时在{} 等待交易***********************************'.format(date))
         while True:
             schedule.run_pending()
             time.sleep(1)
+    else:
+        logging.error('连接失败,程序退出')
     
                     
 
