@@ -16,13 +16,13 @@ import logging
 class seed_trader_info:
 	'''
 	法码发送交易信号
-	作者:xms_quants1
+
 	'''
 	def __init__(self,
 			seed_type='企业微信',
-			sender_email = "1029762153@qq.com",
-			receiver_email = "1029762153@qq.com",
-			password = "jjfgdhklgguebdje",
+			sender_email = "103@qq.com",
+			receiver_email = "153@qq.com",
+			password = "jjfdje",
 			dd_token_list=[''],
 			wx_token_list=['']):
 		'''
