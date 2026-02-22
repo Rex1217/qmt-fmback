@@ -79,10 +79,14 @@ class joinquant_trader:
     def save_data(self):
         try:
             account=self.trader.balance()
-            account.to_excel(r'{}/账户数据/账户数据.xlsx'.format(self.path))
+            path=os.path.join(self.path,'账户数据','账户数据.json')
+            account.to_json(path)
+            #account.to_excel(r'{}/账户数据/账户数据.xlsx'.format(self.path))
             print(account)
             position=self.trader.position()
-            position.to_excel(r'{}/持股数据/持股数据.xlsx'.format(self.path))
+            path=os.path.join(self.path,'持股数据','持股数据.json')
+            position.to_json(path)
+            #position.to_excel(r'{}/持股数据/持股数据.xlsx'.format(self.path))
             print(position)
         except Exception as e:
             print(e,'检测qmt账户,路径是不是对的')
@@ -118,8 +122,11 @@ class joinquant_trader:
         df=pd.DataFrame()
         st_name=text['策略名称']
         try:
-            df['证券代码']=text['股票池']
-            df['名称']=text['股票池名称']
+            file_name=text['股票池文件']
+            file_path=os.path.join(self.path,'blk',file_name)
+            base=base_func()
+            stock_list=base.read_blk_file(path=file_path)
+            df['证券代码']=stock_list
             df['投资备注']=st_name+'B'+df['证券代码']
         except Exception as e:
             print(e,'股票池获取有问题')
@@ -192,8 +199,9 @@ class joinquant_trader:
         df = pd.DataFrame(index=etf_pool, data={'score':score_list})
         df = df.sort_values(by='score', ascending=False)
         df['证券代码']=df.index.tolist()
-        name_dict=dict(zip(text['股票池'],text['股票池名称']))
-        df['名称']=df['证券代码'].apply(lambda x: name_dict.get(x,x))
+        #name_dict=dict(zip(text['股票池'],text['股票池名称']))
+        #df['名称']=df['证券代码'].apply(lambda x: name_dict.get(x,x))
+        df['名称']=df['证券代码']
         df=df[['证券代码','名称','score']]
         print('今日动量计算排行***************')
         print(df)
@@ -279,7 +287,7 @@ class joinquant_trader:
             com=f.read()
         text=json.loads(com)
         is_open=text['是否开启策略隔离']
-        stock_list=text['股票池']
+        stock_list=self.get_trader_stock()['证券代码'].tolist()
         position=self.trader.position()
         if position.shape[0]>0:
             if is_open=='是':
@@ -309,7 +317,7 @@ class joinquant_trader:
             target_num =text['买入数量']
             trader_type=text['交易模式']
             value=text['下单值']
-            etf_pool=text['股票池']
+            etf_pool=self.get_trader_stock()['证券代码'].tolist()
             st_name=text['策略名称']
             target_list = self.get_rank(etf_pool)[:target_num]
             # 卖出    

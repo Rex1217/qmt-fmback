@@ -95,6 +95,27 @@ class base_func:
         else:
             print('周末')
             return False
+    def read_blk_file(self,path='C:/new_tdx/T0002/blocknew/NV01.blk'):
+        '''
+        读取通达信板块文件
+        '''
+        try:
+            with open(path,'r') as f:
+                text=f.readlines()
+            stock_list=[]
+            for i in text:
+                stock=i.strip()
+                if stock[:1]=='0':
+                    stock=stock[1:]+'.SZ'
+                elif stock[:1]=='1':
+                    stock=stock[1:]+'.SH'
+                else:
+                    stock=stock
+                stock_list.append(stock)
+            return stock_list
+        except Exception as e:
+            print(e,'读取板块文件失败')
+            return []
     def select_data_type(self,stock='600031'):
         '''
         选择数据类型
