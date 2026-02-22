@@ -4,6 +4,34 @@ import time
 import math
 import pandas as pd
 import yagmail
+import logging
+import os
+import datetime
+
+def setup_logging():
+    '''
+    配置日志系统
+    '''
+    now = datetime.datetime.now()
+    year = now.strftime('%Y')
+    month = now.strftime('%m')
+    day = now.strftime('%Y-%m-%d')
+    # Use absolute path relative to the project root (assuming execution from root)
+    # Or relative to current working directory
+    log_dir = os.path.join('log', year, month)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    log_file = os.path.join(log_dir, f'{day}.log')
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
+
 class base_func:
     def __init__(self):
         pass
@@ -60,7 +88,7 @@ class base_func:
                 is_trader=False
                 return False
         else:
-            print('周末')
+            logging.info('周末')
             return False
     def check_is_trader_date_1(self):
         '''
@@ -93,7 +121,7 @@ class base_func:
             else:
                 return False    
         else:
-            print('周末')
+            logging.info('周末')
             return False
     def read_blk_file(self,path='C:/new_tdx/T0002/blocknew/NV01.blk'):
         '''
@@ -114,7 +142,7 @@ class base_func:
                 stock_list.append(stock)
             return stock_list
         except Exception as e:
-            print(e,'读取板块文件失败')
+            logging.error(f'读取板块文件失败:{e}')
             return []
     def select_data_type(self,stock='600031'):
         '''

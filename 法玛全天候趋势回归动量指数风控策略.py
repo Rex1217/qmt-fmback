@@ -5,7 +5,8 @@ import time
 import datetime
 import schedule
 import json
-from trader_tool.base_func import base_func
+from trader_tool.base_func import base_func, setup_logging
+import logging
 import os
 from trader_tool.joinquant_data import joinquant_data
 from trader_tool.seed_trader_info import seed_trader_info
@@ -29,8 +30,9 @@ class joinquant_trader:
         时间:20260123
         系统放在桌面一级目录就可以
         '''
-        print('################################################################################################')
-        print("""
+        setup_logging()
+        logging.info('################################################################################################')
+        logging.info("""
             风险告知书,代码开源,自己使用风险自担，和作者无关，代码只用于学习研究使用,不做交易参考,运行请仔细研究源代码,模拟盘测试
             请在使用前仔细阅读下述内容
             1、数据、计算、程序等力求但不保证绝对正确，不排除技术故障，因此带来的风险需自行承担。
@@ -45,7 +47,7 @@ class joinquant_trader:
             10、所有内容仅供参考学习，均在模拟盘的环境下使用，请充分掌握后使用，实盘使用风险请自行承担。
               
             """)
-        print('################################################################################################')
+        logging.info('################################################################################################')
         self.data_api=data_api
         self.exe=exe
         self.tesseract_cmd=tesseract_cmd
@@ -73,8 +75,8 @@ class joinquant_trader:
             self.trader.connect()
             return True
         except Exception as e:
-            print("运行错误:",e)
-            print('{}连接失败'.format(self.trader_tool))
+            logging.error(f"运行错误:{e}")
+            logging.error('{}连接失败'.format(self.trader_tool))
             return False
     def save_data(self):
         try:
@@ -82,14 +84,14 @@ class joinquant_trader:
             path=os.path.join(self.path,'账户数据','账户数据.json')
             account.to_json(path)
             #account.to_excel(r'{}/账户数据/账户数据.xlsx'.format(self.path))
-            print(account)
+            logging.info(account)
             position=self.trader.position()
             path=os.path.join(self.path,'持股数据','持股数据.json')
             position.to_json(path)
             #position.to_excel(r'{}/持股数据/持股数据.xlsx'.format(self.path))
-            print(position)
+            logging.info(position)
         except Exception as e:
-            print(e,'检测qmt账户,路径是不是对的')
+            logging.error(f'{e} 检测qmt账户,路径是不是对的')
     def get_index_hist_data(self,stock='000001.SH'):
         '''
         读取指数数据
@@ -129,7 +131,7 @@ class joinquant_trader:
             df['证券代码']=stock_list
             df['投资备注']=st_name+'B'+df['证券代码']
         except Exception as e:
-            print(e,'股票池获取有问题')
+            logging.error(f'{e} 股票池获取有问题')
         return df
     def MOM(self,etf='518800'):
         '''
@@ -177,7 +179,7 @@ class joinquant_trader:
         last_index=index_df['close'].tolist()[-1]
         last_index_line=index_df['index_line'].tolist()[-1]
         if last_index<last_index_line and stock in index_trader_stock:
-            print(stock,'触发指数风控卖出************')
+            logging.info(f'{stock} 触发指数风控卖出************')
             score=-100
         else:
             if last_price<last_line:
@@ -203,8 +205,8 @@ class joinquant_trader:
         #df['名称']=df['证券代码'].apply(lambda x: name_dict.get(x,x))
         df['名称']=df['证券代码']
         df=df[['证券代码','名称','score']]
-        print('今日动量计算排行***************')
-        print(df)
+        logging.info('今日动量计算排行***************')
+        logging.info(df)
         df = df[(df['score'] > min_value) & (df['score'] <= max_value)] #安全区间，动量过高过低都不好
         rank_list = list(df.index)
         if len(rank_list) == 0:
@@ -291,13 +293,13 @@ class joinquant_trader:
         position=self.trader.position()
         if position.shape[0]>0:
             if is_open=='是':
-                print('开启策略隔离******************')
+                logging.info('开启策略隔离******************')
                 position['证券代码']=position['证券代码'].astype(str)
                 position['隔离']=position['证券代码'].apply(lambda x: '是' if x in stock_list else '不是')
                 position=position[position['隔离']=='是']
             else:
                 position=position
-                print('不开启策略隔离******************')
+                logging.info('不开启策略隔离******************')
         else:
             position=position
         return position
@@ -381,15 +383,15 @@ class joinquant_trader:
                             try:
                                 hold_list.remove(stock)
                             except Exception as e:
-                                print(e,stock,'移除持股有问题******')
+                                logging.error(f'{e} {stock} 移除持股有问题******')
                             #卖出等待30秒充分的等待卖单成交
                             time.sleep(30)
                         else:
-                            print(maker,'已经卖出委托不在下单')
+                            logging.info(f'{maker} 已经卖出委托不在下单')
                     else:
-                        print(stock,'卖出不了')
+                        logging.info(f'{stock} 卖出不了')
                 else:
-                    print(stock,'卖出在动量排名继续持有')
+                    logging.info(f'{stock} 卖出在动量排名继续持有')
             # 买入
             for stock in target_list:
                 if stock not in hold_list:
@@ -425,13 +427,13 @@ class joinquant_trader:
                                 """.format(stock,amount,price,datetime.datetime.now())
                             self.seed_trader_data(msg=msg)
                         else:
-                            print(maker,'已经买入委托不在下单')
+                            logging.info(f'{maker} 已经买入委托不在下单')
                     else:
-                        print(stock,'买入不了')
+                        logging.info(f'{stock} 买入不了')
                 else:
-                    print(stock,'买入在动量排名继续持有')
+                    logging.info(f'{stock} 买入在动量排名继续持有')
         else:
-            print('{} 目前不是交易时间'.format(datetime.datetime().now()))
+            logging.info('{} 目前不是交易时间'.format(datetime.datetime.now()))
     def check_is_trader_date_1(self):
         '''
         检测是不是交易时间
@@ -464,7 +466,7 @@ class joinquant_trader:
                 else:
                     return False    
             else:
-                print('周末')
+                logging.info('周末')
                 return False
     def seed_trader_data(self,msg='test'):
         '''
@@ -497,9 +499,9 @@ class joinquant_trader:
         st_text=json.loads(com)
         date_list=st_text['调仓时间']
         if self.check_is_trader_date_1():
-            print('{} 策略的调仓时间是{} 等待时间调仓****************************'.format(datetime.datetime.now(),date_list))
+            logging.info('{} 策略的调仓时间是{} 等待时间调仓****************************'.format(datetime.datetime.now(),date_list))
         else:
-            print('{} 目前不是交易时间'.format(datetime.datetime.now()))
+            logging.info('{} 目前不是交易时间'.format(datetime.datetime.now()))
 if __name__=='__main__':
     '''
     法玛全天候趋势回归动量指数风控策略

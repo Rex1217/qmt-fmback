@@ -11,6 +11,8 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import logging
+
 class seed_trader_info:
 	'''
 	法码发送交易信号
@@ -58,9 +60,9 @@ class seed_trader_info:
 			server.starttls()  # 启用安全连接
 			server.login(sender_email, password)
 			server.sendmail(sender_email, receiver_email, message.as_string())
-			print("邮件发送成功！")
+			logging.info("邮件发送成功！")
 		except Exception as e:
-			print(e,'邮箱发送失败')
+			logging.error(f'{e} 邮箱发送失败')
 	def seed_dingding(self,msg='买卖交易成功,'):
 		'''
 		发送钉钉
@@ -82,10 +84,10 @@ class seed_trader_info:
 		text=r.json()
 		errmsg=text['errmsg']
 		if errmsg=='ok':
-			print('钉钉发生成功')
+			logging.info('钉钉发生成功')
 			return text
 		else:
-			print(text)
+			logging.info(text)
 			return text
 	def seed_wechat(self, msg='买卖交易成功,'):
 		'''
@@ -108,10 +110,10 @@ class seed_trader_info:
 		text = r.json()
 		errmsg = text['errmsg']
 		if errmsg == 'ok':
-			print('wechat发生成功')
+			logging.info('wechat发生成功')
 			return text
 		else:
-			print(text)
+			logging.info(text)
 			return text
 	def seed_trader_info(self,msg=''):
 		'''
